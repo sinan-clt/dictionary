@@ -98,6 +98,7 @@ class ListwordsAPI(APIView):
         return Response(data)
 
 
+from django.db.models import
 class SearchWordSerializer(serializers.Serializer):
     query = serializers.CharField()
 
@@ -108,14 +109,20 @@ class SearchWordAPI(APIView):
         serializer = SearchWordSerializer(data=request.GET)
         serializer.is_valid(raise_exception=True)
         query = serializer.validated_data['query']
+
+        word = Dictionary.objects.filter(label=query, is_deleted=False).first()
+        if word:
+            word.search_count = F('search_count') + 1
+            word.save()
+
+        serializer = WordSerializer(word)
         
-        words = Dictionary.objects.filter(label__icontains=query, is_deleted=False)
-        serializer = WordSerializer(words, many=True)
         data = {
-            'words': serializer.data
+            'word': serializer.data
         }
         return Response(data)
-    
+
+
 
 class CreateAPI(APIView):
     permission_classes = [IsAuthenticated]
